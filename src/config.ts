@@ -9,7 +9,7 @@ export const getConfig = (): Config => {
   const availableMemory = os.totalmem();
   const userConfig = getUserConfig();
 
-  // Example logic to determine number of workers based on memory and user config
+  // determine number of workers based on memory and user config
   const maxKaiWorkers = Math.min(userConfig.kaiWorkers, Math.floor(availableMemory / 1000000000)); // 1GB per worker
   const maxKantraWorkers = Math.min(userConfig.kantraWorkers, Math.floor(availableMemory / 1000000000)); // 1GB per worker
 
@@ -20,9 +20,10 @@ export const getConfig = (): Config => {
 };
 
 const getUserConfig = () => {
-  // Placeholder for actual user config retrieval logic
+  // todo: get user config 
+  // returning a constant value now 
   return {
     kaiWorkers: 4,
-    kantraWorkers: 1,
+    kantraWorkers: 4,
   };
 };

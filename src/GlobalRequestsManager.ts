@@ -64,7 +64,9 @@ export class RequestsManager implements IRequestManager {
     this.processQueue.push(task);
   }
 
+  // dequeue the task that is completed. It can be at any position in the queue
   dequeue(file: string) {
+    // todo: see if there is any other effective mechanism to do this without recreating the queue
     this.processQueue = this.processQueue.filter(task => task.file !== file);
   }
 

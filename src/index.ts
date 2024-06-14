@@ -9,6 +9,8 @@ requestsManager.handleRequest("FileA", "Kai");
 requestsManager.handleRequest("FileJ", "Kantra");
 requestsManager.handleRequest("FileJ", "Kai");
 requestsManager.handleRequest("FileA", "Stop");
+requestsManager.handleRequest("FileB", "Kantra");
+requestsManager.handleRequest("FileC", "Kai");
 
 // Access the fileMap from another module
 const fileMap = requestsManager.getFileMap();
