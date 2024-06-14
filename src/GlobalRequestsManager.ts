@@ -1,29 +1,90 @@
-export type FileAction = "Kai" | "Analysis" | "Stop"
+import { FileProcess, IRequestManager, Task, FileAction } from './types';
 
-export interface Task {
-    filePath: string;
-    fileAction: FileAction;
-}
+export class RequestsManager implements IRequestManager {
+  private fileMap: Map<string, FileProcess>;
+  private processQueue: Array<Task>;
 
-export class FileProcess {
-    processState: string;
-    processType: FileAction;
-    hash: string;
-    stopController: AbortController
+  constructor() {
+    this.fileMap = new Map();
+    this.processQueue = [];
+  }
 
-    constructor( processState: string, processType: FileAction, hash: string, stopController: AbortController) {
-        this.processState = processState;
-        this.processType = processType;
-        this.hash = hash;
-        this.stopController = stopController;
+  handleRequest(file: string, action: FileAction) {
+    try {
+      const fileProcess = this.fileMap.get(file);
+
+      if (action === "Stop") {
+        this.stopProcess(file);
+      } else {
+        if (fileProcess && (fileProcess.state === 'in progress' || fileProcess.state === 'waiting')) {
+          throw new Error(`Process already running or waiting on file ${file}`);
+        }
+        this.addProcess(file, action);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error('An unknown error occurred');
+      }
     }
+  }
 
+  private stopProcess(file: string) {
+    const fileProcess = this.fileMap.get(file);
+    if (fileProcess) {
+      fileProcess.controller.abort();
+      fileProcess.state = 'none';
+      fileProcess.process = 'none';
+      this.fileMap.set(file, fileProcess);
+      this.printFileProcess(file);
+      this.dequeue(file);
+      console.log(`Process on file ${file} stopped`);
+    }
+  }
+
+  private addProcess(file: string, action: FileAction) {
+    const controller = new AbortController();
+    const hash = this.generateHash();
+    const fileProcess = this.fileMap.get(file) || new FileProcess("none", controller, hash, "none");
+    fileProcess.state = "waiting";
+    fileProcess.controller = controller;
+    fileProcess.hash = hash;
+    fileProcess.process = action;
+    this.fileMap.set(file, fileProcess);
+    this.printFileProcess(file);
+    this.enqueue({ file, action });
+  }
+
+  private generateHash(): string {
+    return Math.random().toString(36).substring(2, 15);
+  }
+
+  private enqueue(task: Task) {
+    this.processQueue.push(task);
+  }
+
+  dequeue(file: string) {
+    this.processQueue = this.processQueue.filter(task => task.file !== file);
+  }
+
+  getProcessQueue() {
+    return this.processQueue;
+  }
+
+  getFileMap() {
+    return this.fileMap;
+  }
+
+  printFileProcess(file: string) {
+    const fileProcess = this.fileMap.get(file);
+    if (fileProcess) {
+      console.log(`'${file}' => FileProcess {
+        state: '${fileProcess.state}',
+        controller: [object AbortController],
+        hash: '${fileProcess.hash}',
+        process: '${fileProcess.process}'
+      }`);
+    }
+  }
 }
-
-export interface RequestsManagerInterface {
-    getRequestsMap(): Map<string, FileProcess>;
-    handleRequest(filePath: string, action: FileAction): void;
-    getProcessQueue(): Task[];
-
-}
-
