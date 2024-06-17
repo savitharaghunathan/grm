@@ -19,63 +19,61 @@ export class ProcessController {
   private async pollQueue() {
     while (true) {
       await this.processQueue();
-      await this.sleep(1000);
+      await this.sleep(1000); // todo: may be there is a better mechanism to poll
     }
   }
 
   async processQueue() {
     const queue = this.requestsManager.getProcessQueue();
-    while (this.activeKaiTasks.size < this.maxKaiWorkers || this.activeKantraTasks.size < this.maxKantraWorkers) {
-      if (queue.length === 0) return;
-
+    console.log("Current queue ------------:", queue);
+    while (queue.length > 0) {
       const task = queue.shift();
-      if (!task) return;
+      if (!task) continue;
 
       const fileProcess = this.requestsManager.getFileMap().get(task.file);
       if (!fileProcess || fileProcess.state === 'in progress') continue;
 
-      // using set to make the file tasks unique
-      fileProcess.state = 'in progress';
-      this.requestsManager.getFileMap().set(task.file, fileProcess);
-      this.requestsManager.printFileProcess(task.file);
-      console.log(`Processing ${task.action} on file ${task.file}`);
-
       if (task.action === "Kai" && this.activeKaiTasks.size < this.maxKaiWorkers) {
         this.activeKaiTasks.add(task.file);
-        this.processTask(task)
-          .then(() => this.activeKaiTasks.delete(task.file))
-          .catch(() => this.activeKaiTasks.delete(task.file))
-          .finally(() => this.dequeue(task.file));
+        this.startTask(task);
       } else if (task.action === "Kantra" && this.activeKantraTasks.size < this.maxKantraWorkers) {
         this.activeKantraTasks.add(task.file);
-        this.processTask(task)
-          .then(() => this.activeKantraTasks.delete(task.file))
-          .catch(() => this.activeKantraTasks.delete(task.file))
-          .finally(() => this.dequeue(task.file));
+        this.startTask(task);
       } else {
-        queue.push(task); // Requeue if unable to process due to worker limits
+        // Requeue the task if unable to process due to worker limits
+        queue.unshift(task);
+        break;
       }
     }
   }
 
-  private async processTask(task: Task) {
+  private async startTask(task: Task) {
     const fileProcess = this.requestsManager.getFileMap().get(task.file);
     if (fileProcess) {
-      await this.fileOperation(task.file, task.action, fileProcess.controller)
-        .then(() => {
-          fileProcess.state = 'completed';
-          fileProcess.process = 'none';
-          this.requestsManager.getFileMap().set(task.file, fileProcess);
-          this.requestsManager.printFileProcess(task.file);
-          console.log(`Finished ${task.action} on file ${task.file}`);
-        })
-        .catch((error) => {
-          console.error(error);
-          fileProcess.state = 'failed';
-          this.requestsManager.getFileMap().set(task.file, fileProcess);
-          this.requestsManager.printFileProcess(task.file);
-          console.log(`Failed ${task.action} on file ${task.file}`);
-        });
+      fileProcess.state = 'in progress';
+      this.requestsManager.getFileMap().set(task.file, fileProcess);
+      this.requestsManager.printFileProcess(task.file);
+      console.log(`Starting ${task.action} on file ${task.file}`);
+
+      try {
+        await this.fileOperation(task.file, task.action, fileProcess.controller);
+        fileProcess.state = 'completed';
+        fileProcess.process = 'none';
+        console.log(`Finished ${task.action} on file ${task.file}`);
+      } catch (error) {
+        console.error(`Error processing ${task.action} on file ${task.file}:`, error);
+        fileProcess.state = 'failed';
+      } finally {
+        this.requestsManager.getFileMap().set(task.file, fileProcess);
+        this.requestsManager.printFileProcess(task.file);
+
+        if (task.action === "Kai") {
+          this.activeKaiTasks.delete(task.file);
+        } else if (task.action === "Kantra") {
+          this.activeKantraTasks.delete(task.file);
+        }
+        this.dequeue(task.file);
+      }
     }
   }
 
