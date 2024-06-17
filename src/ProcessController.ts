@@ -60,7 +60,7 @@ export class ProcessController {
   private async processTask(task: Task) {
     const fileProcess = this.requestsManager.getFileMap().get(task.file);
     if (fileProcess) {
-      await this.simulateFileOperation(task.file, task.action, fileProcess.controller)
+      await this.fileOperation(task.file, task.action, fileProcess.controller)
         .then(() => {
           fileProcess.state = 'completed';
           fileProcess.process = 'none';
@@ -78,13 +78,13 @@ export class ProcessController {
     }
   }
 
-  private async simulateFileOperation(file: string, action: string, controller: AbortController) {
-    // Simulate backend call
+  private async fileOperation(file: string, action: string, controller: AbortController) {
+    // Todo: Redo this with proper call to the fileops component
     return new Promise<void>((resolve, reject) => {
       const signal = controller.signal;
       const timeout = setTimeout(() => {
         resolve();
-      }, 2000); // Simulated backend processing time
+      }, 2000); // todo: change this
 
       signal.addEventListener("abort", () => {
         clearTimeout(timeout);
