@@ -5,7 +5,7 @@ export interface Task {
   action: FileAction;
 }
 
-export interface IRequestManager {
+export interface RequestManagerInterface {
   handleRequest(file: string, action: FileAction): void;
   getProcessQueue(): Task[];
   getFileMap(): Map<string, FileProcess>;

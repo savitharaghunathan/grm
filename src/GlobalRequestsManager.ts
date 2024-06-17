@@ -1,6 +1,6 @@
-import { FileProcess, IRequestManager, Task, FileAction } from './types';
+import { FileProcess, RequestManagerInterface, Task, FileAction } from './types';
 
-export class RequestsManager implements IRequestManager {
+export class GlobalRequestsManager implements RequestManagerInterface {
   private fileMap: Map<string, FileProcess>;
   private processQueue: Array<Task>;
 

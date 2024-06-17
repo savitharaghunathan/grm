@@ -9,7 +9,7 @@ export const getConfig = (): Config => {
   const availableMemory = os.totalmem();
   const userConfig = getUserConfig();
 
-  // determine number of workers based on memory and user config
+  // Todo: determine number of workers based on memory and user config
   const maxKaiWorkers = Math.min(userConfig.kaiWorkers, Math.floor(availableMemory / 1000000000)); // 1GB per worker
   const maxKantraWorkers = Math.min(userConfig.kantraWorkers, Math.floor(availableMemory / 1000000000)); // 1GB per worker
 

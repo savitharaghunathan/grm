@@ -1,13 +1,13 @@
-import { IRequestManager, Task } from './types';
+import { RequestManagerInterface, Task } from './types';
 
 export class ProcessController {
-  private requestsManager: IRequestManager;
+  private requestsManager: RequestManagerInterface;
   private maxKaiWorkers: number;
   private maxKantraWorkers: number;
   private activeKaiTasks: Set<string>;
   private activeKantraTasks: Set<string>;
 
-  constructor(requestsManager: IRequestManager, maxKaiWorkers: number, maxKantraWorkers: number) {
+  constructor(requestsManager: RequestManagerInterface, maxKaiWorkers: number, maxKantraWorkers: number) {
     this.requestsManager = requestsManager;
     this.maxKaiWorkers = maxKaiWorkers;
     this.maxKantraWorkers = maxKantraWorkers;
