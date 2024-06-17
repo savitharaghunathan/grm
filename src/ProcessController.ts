@@ -34,6 +34,7 @@ export class ProcessController {
       const fileProcess = this.requestsManager.getFileMap().get(task.file);
       if (!fileProcess || fileProcess.state === 'in progress') continue;
 
+      // using set to make the file tasks unique
       fileProcess.state = 'in progress';
       this.requestsManager.getFileMap().set(task.file, fileProcess);
       this.requestsManager.printFileProcess(task.file);
